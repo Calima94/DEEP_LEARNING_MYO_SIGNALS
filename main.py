@@ -11,6 +11,8 @@ import numpy as np
 import train_signals_emg
 import os
 
+# Define the desired columns for EMG data
+COLUMNS_DESIRED = ["time", "chanel1", "chanel2", "chanel3", "chanel4"]
 
 class EmgApplication(Ui_Form):
     def __init__(self, definitions) -> None:
