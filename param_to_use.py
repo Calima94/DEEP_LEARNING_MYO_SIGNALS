@@ -1,5 +1,9 @@
 import pandas as pd
 import ast
+import os
+
+# Obter o diretório do script atual
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class ParametersToUse:
     """
@@ -24,7 +28,8 @@ class ParametersToUse:
         self.read_csv()
 
     def read_csv(self):
-        df = pd.read_csv("Parameters/parameters.csv", index_col="Parameter")
+        parameters_path = os.path.join(SCRIPT_DIR, "Parameters", "parameters.csv")
+        df = pd.read_csv(parameters_path, index_col="Parameter")
         self.frequency = float(df.loc["frequency_of_capture", "Value"])
         self.time_between_captures_of_samples = (1 / self.frequency) * 1000.0
         self.window_time = float(df.loc["window_time", "Value"])

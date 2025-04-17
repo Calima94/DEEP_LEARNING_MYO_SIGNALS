@@ -2,6 +2,10 @@ import pandas as pd
 import numpy as np
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import os
+
+# Obter o diretório do script atual
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def selecionar_arquivo():
     """Abre uma janela para selecionar um arquivo"""
@@ -35,13 +39,15 @@ if not arquivos:
 # Lista para armazenar os DataFrames convertidos
 dfs = []
 
+# Definir os nomes das colunas corretamente
+COLUMNS_DESIRED = ["time", "channel1", "channel2", "channel3", "channel4"]
+
 for arquivo in arquivos:
     # Ler o arquivo sem cabeçalhos
     df = pd.read_csv(arquivo, sep="\t", header=None)
 
-    # Definir os nomes das colunas
-    colunas_desejadas = ["chanel1", "chanel2", "chanel3", "chanel4"]
-    df.columns = colunas_desejadas
+    # Definir os nomes das colunas (excluindo a coluna time que será adicionada depois)
+    df.columns = ["channel1", "channel2", "channel3", "channel4"]
 
     # Criar a coluna de tempo começando em 0.000
     df.insert(0, "time", np.arange(0, len(df) * 0.001, 0.001))
@@ -56,7 +62,10 @@ for arquivo in arquivos:
 # Empilhar todos os arquivos
 df_final = pd.concat(dfs, ignore_index=True)
 
-# Salvar o novo arquivo combinado
-df_final.to_csv("arquivo_empilhado.csv", index=False)
+# Criar o caminho relativo para salvar o arquivo
+output_path = os.path.join(SCRIPT_DIR, "arquivo_empilhado.csv")
 
-print("Todos os arquivos foram empilhados e salvos como 'arquivo_empilhado.csv'!")
+# Salvar o novo arquivo combinado
+df_final.to_csv(output_path, index=False)
+
+print(f"Todos os arquivos foram empilhados e salvos como '{output_path}'!")

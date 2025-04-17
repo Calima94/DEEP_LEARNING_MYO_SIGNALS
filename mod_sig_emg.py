@@ -18,7 +18,10 @@ from sklearn.metrics import accuracy_score
 from joblib import dump
 from sklearn.preprocessing import OrdinalEncoder
 from scipy import signal
+import os
 
+# Obter o diretório do script atual
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # from sklearn.preprocessing import StandardScaler
 
@@ -52,8 +55,13 @@ def read_data(file):
 
 
 def spare_classes_(data):
+    """
+    Separa os dados em classes baseado na última coluna do DataFrame
+    """
     positions = data.groupby(data.columns.values[-1])
-    classes = [positions.get_group(i + 1) for i, j in enumerate(positions)]
+    # Pega os grupos que existem nos dados, em vez de assumir números sequenciais
+    existing_groups = sorted(positions.groups.keys())
+    classes = [positions.get_group(group) for group in existing_groups]
     return classes
 
 
@@ -343,17 +351,20 @@ def store_accuracy(classifiers, var_test, var_test_target):
 
 
 def dump_classifiers(lda, tree, gnb, lin_svm, knn):
-    dump(lda, 'files_joblib/lda_teste.joblib')
-    dump(tree, 'files_joblib/tree_teste.joblib')
-    dump(gnb, 'files_joblib/gnb_teste.joblib')
-    dump(lin_svm, 'files_joblib/lin_svm_teste.joblib')
-    dump(knn, 'files_joblib/neigh_teste.joblib')
-    # copy_to_my_arm_def the .jobfiles files
-    dump(lda, '../my_arm_def/lda_teste.joblib')
-    dump(tree, '../my_arm_def/tree_teste.joblib')
-    dump(gnb, '../my_arm_def/gnb_teste.joblib')
-    dump(lin_svm, '../my_arm_def/lin_svm_teste.joblib')
-    dump(knn, '../my_arm_def/neigh_teste.joblib')
+    """
+    Salva os classificadores treinados em arquivos .joblib
+    """
+    # Criar diretório para os modelos se não existir
+    models_dir = os.path.join(SCRIPT_DIR, 'models')
+    if not os.path.exists(models_dir):
+        os.makedirs(models_dir)
+    
+    # Salvar os modelos usando caminhos relativos
+    dump(lda, os.path.join(models_dir, 'lda_model.joblib'))
+    dump(tree, os.path.join(models_dir, 'tree_model.joblib'))
+    dump(gnb, os.path.join(models_dir, 'gnb_model.joblib'))
+    dump(lin_svm, os.path.join(models_dir, 'svm_model.joblib'))
+    dump(knn, os.path.join(models_dir, 'knn_model.joblib'))
 
 # def predict_data(data_):
 # from joblib import load
