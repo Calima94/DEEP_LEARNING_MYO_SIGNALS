@@ -13,4 +13,4 @@ test_size,0.2,,30% of the samples will be for test and 70% for training
 cv,5,,Number used for Cross Validation
 file,C:/Users/clima/OneDrive/Área de Trabalho/Cursor/arquivo_empilhado.csv,,File containing the raw data to training
 type_matrix,rms,,
-random_state,25,,
+random_state,5,,

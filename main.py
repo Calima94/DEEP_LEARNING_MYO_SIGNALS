@@ -153,6 +153,7 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
             
             QPushButton#plot_conf_matrix_btn:hover {{
                 background-color: #2980b9;
+                border: 2px solid white;
             }}
             
             QPushButton#plot_roc_curve_btn {{
@@ -166,6 +167,7 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
             
             QPushButton#plot_roc_curve_btn:hover {{
                 background-color: #c0392b;
+                border: 2px solid white;
             }}
             
             QPushButton#plot_process_signals_btn {{
@@ -179,6 +181,7 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
             
             QPushButton#plot_process_signals_btn:hover {{
                 background-color: #27ae60;
+                border: 2px solid white;
             }}
             
             QPushButton#plot_raw_signals_btn {{
@@ -192,6 +195,7 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
             
             QPushButton#plot_raw_signals_btn:hover {{
                 background-color: #d35400;
+                border: 2px solid white;
             }}
         """
         
@@ -326,6 +330,7 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
                 
                 QPushButton:hover {{
                     background-color: #2c3e50;
+                    border: 2px solid white;
                 }}
                 
                 QPushButton:pressed {{
@@ -408,6 +413,52 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
         # Add Canvas
         self.horizontalLayout_17.addWidget(self.canvas_roc_curve)
         # end of horizontal layout
+
+    def load_default_values(self) -> None:
+        """
+        Load default values from parameters.csv into the UI elements
+        """
+        try:
+            # Read parameters from CSV
+            df = pd.read_csv("Parameters/parameters.csv", index_col="Parameter")
+            
+            # Set values in UI elements
+            self.frequency.setText(str(df.loc["frequency_of_capture", "Value"]))
+            self.window_time.setText(str(df.loc["window_time", "Value"]))
+            
+            # Set number of channels and update comboboxes
+            n_channels = int(df.loc["n_of_channels_and_category", "Value"])
+            self.n_of_channels.setCurrentText(str(n_channels))
+            self.update_channel_comboboxes(n_channels)
+            
+            # Clear and initialize channel selection comboboxes
+            self.cb_plot_channel_1_process_signals.clear()
+            self.cb_plot_channel_2_process_signals.clear()
+            
+            # Add channel options to comboboxes
+            for i in range(1, n_channels + 1):
+                self.cb_plot_channel_1_process_signals.addItem(str(i))
+                self.cb_plot_channel_2_process_signals.addItem(str(i))
+            
+            # Set default selections
+            self.cb_plot_channel_1_process_signals.setCurrentIndex(0)  # First channel
+            self.cb_plot_channel_2_process_signals.setCurrentIndex(1)  # Second channel
+            
+            self.wav_filter.setText(str(df.loc["filter_to_use", "Value"]))
+            self.levels_of_wav_filter.setCurrentText(str(df.loc["levels_to_use", "Value"]))
+            self.layers_to_use.setCurrentText(str(len(ast.literal_eval(df.loc["layers_to_catch", "Value"]))))
+            self.type_of_matrix.setCurrentText(str(df.loc["type_matrix", "Value"]))
+            self.test_size.setText(str(df.loc["test_size", "Value"]))
+            self.random_state.setText(str(df.loc["random_state", "Value"]))
+            self.cv.setText(str(df.loc["cv", "Value"]))
+            self.file_path_label.setText(str(df.loc["file", "Value"]))
+            
+            # Set filter paths
+            self.filter_1_path.setText("Parameters/sos_highpass_filter.csv")
+            self.filter_2_path.setText("Parameters/sos_bandstop_filter.csv")
+            
+        except Exception as e:
+            print(f"Error loading default values: {e}")
 
     def train_data(self, store=False, **kwargs) -> None:
         """
@@ -527,6 +578,9 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
         
         # Reload parameters
         self.params = ParametersToUse()
+
+        # Update comboboxes dynamically
+        self.update_channel_comboboxes(int(n_of_channels))
         
         # Update UI with success message
         self.parameters_updated_msg()
@@ -780,35 +834,79 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
             # clear the canvas
             self.figure_1.clear()
             
-            # Get the number of channels from parameters
-            n_channels = self.params.n_of_channels_and_category
-            
-            # Clear and update the channel selection comboboxes
-            self.cb_plot_channel_1_process_signals.clear()
-            self.cb_plot_channel_2_process_signals.clear()
-            
-            # Add only the available channels to the comboboxes
-            for i in range(1, n_channels + 1):
-                self.cb_plot_channel_1_process_signals.addItem(str(i))
-                self.cb_plot_channel_2_process_signals.addItem(str(i))
-            
-            # Select the first channel (X axis)
-            channel_1 = int(self.cb_plot_channel_1_process_signals.currentText())
-            # Select the second channel (Y axis)
-            channel_2 = int(self.cb_plot_channel_2_process_signals.currentText())
-            
-            # Read the processed data
-            df = pd.read_csv("M_Class_Data/training_matrix_csv_m_class.csv")
-            
-            # Ensure we're using the correct column names
-            col1_name = f"Chanel_{channel_1}"
-            col2_name = f"Chanel_{channel_2}"
-            
-            # Verify columns exist in the dataframe
-            if col1_name in df.columns and col2_name in df.columns:
-                self.plot_values_of_channels_process_emg(df, channel_1, channel_2)
-            else:
-                print(f"Error: Columns {col1_name} or {col2_name} not found in dataframe")
+            try:
+                # Read the processed data
+                df = pd.read_csv("M_Class_Data/training_matrix_csv_m_class.csv")
+                
+                # Get the number of channels from parameters
+                n_channels = self.params.n_of_channels_and_category
+                print(f"Number of channels from parameters: {n_channels}")
+                
+                # Print current items in comboboxes
+                print("Channel 1 combobox items:", [self.cb_plot_channel_1_process_signals.itemText(i) for i in range(self.cb_plot_channel_1_process_signals.count())])
+                print("Channel 2 combobox items:", [self.cb_plot_channel_2_process_signals.itemText(i) for i in range(self.cb_plot_channel_2_process_signals.count())])
+                
+                # Clear and update the channel selection comboboxes
+                #self.cb_plot_channel_1_process_signals.clear()
+                #self.cb_plot_channel_2_process_signals.clear()
+                
+                # Add only the available channels to the comboboxes
+               ## for i in range(1, n_channels + 1):
+                   # self.cb_plot_channel_1_process_signals.addItem(str(i))
+                   # self.cb_plot_channel_2_process_signals.addItem(str(i))
+                
+                channel_1 = int(self.cb_plot_channel_1_process_signals.currentText())
+                channel_2 = int(self.cb_plot_channel_2_process_signals.currentText())
+                
+                print("After updating comboboxes:")
+                print("Channel 1 combobox items:", [self.cb_plot_channel_1_process_signals.itemText(i) for i in range(self.cb_plot_channel_1_process_signals.count())])
+                print("Channel 2 combobox items:", [self.cb_plot_channel_2_process_signals.itemText(i) for i in range(self.cb_plot_channel_2_process_signals.count())])
+                
+                # Get the selected channel numbers from the comboboxes
+                channel_1 = int(self.cb_plot_channel_1_process_signals.currentText())
+                print(f"Selected channel 1: {channel_1}")
+                channel_2 = int(self.cb_plot_channel_2_process_signals.currentText())
+                print(f"Selected channel 2: {channel_2}")
+                
+                # Get column names based on the dataframe's actual column names
+                # First, find columns that contain "Chanel" or "Channel"
+                channel_columns = [col for col in df.columns if "Chanel" in col or "Channel" in col]
+                print("Available channel columns:", channel_columns)
+                
+                # If we found channel columns, use them
+                if channel_columns:
+                    # Sort the channel columns to ensure proper ordering
+                    channel_columns.sort()
+                    
+                    # Make sure we don't exceed the available channels
+                    if channel_1 <= len(channel_columns) and channel_2 <= len(channel_columns):
+                        # Get the actual column names for the selected channels
+                        col1_name = channel_columns[channel_1 - 1]
+                        col2_name = channel_columns[channel_2 - 1]
+                        
+                        print(f"Using columns: {col1_name} and {col2_name}")
+                        
+                        # Create display names for the channels (for labels and title)
+                        col1_display = f"Channel_{channel_1}"
+                        col2_display = f"Channel_{channel_2}"
+                        
+                        # Verify columns exist in the dataframe
+                        if col1_name in df.columns and col2_name in df.columns:
+                            # Pass both the actual column names and the display names
+                            self.plot_values_of_channels_process_emg(df, col1_name, col2_name, col1_display, col2_display)
+                        else:
+                            print(f"Error: Columns {col1_name} or {col2_name} not found in dataframe")
+                            self.show_error_message(f"Columns {col1_name} or {col2_name} not found in dataframe")
+                    else:
+                        print(f"Error: Selected channels exceed available channels")
+                        self.show_error_message("Selected channels exceed available channels")
+                else:
+                    print("Error: No channel columns found in the dataframe")
+                    self.show_error_message("No channel columns found in the dataframe")
+                
+            except Exception as e:
+                print(f"Error in classified_signals: {e}")
+                self.show_error_message(f"Error: {str(e)}")
             
             # refresh canvas
             self.canvas_process_signals.draw()
@@ -816,55 +914,97 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
         else:
             self.not_trained_model()
 
-    def plot_values_of_channels_process_emg(self, df, col1, col2) -> None:
+    def update_channel_comboboxes(self, n_channels: int):
+        """
+        Dynamically update channel selection comboboxes based on the number of channels.
+        This should be called only when the number of channels changes.
+        """
+        if self.cb_plot_channel_1_process_signals.count() == n_channels:
+            return  # Already up-to-date
+
+        print("Updating ComboBoxes!")
+
+        self.cb_plot_channel_1_process_signals.blockSignals(True)
+        self.cb_plot_channel_2_process_signals.blockSignals(True)
+
+        self.cb_plot_channel_1_process_signals.clear()
+        self.cb_plot_channel_2_process_signals.clear()
+
+        for i in range(1, n_channels + 1):
+            self.cb_plot_channel_1_process_signals.addItem(str(i))
+            self.cb_plot_channel_2_process_signals.addItem(str(i))
+
+        # Optional: set default selection to 1 and 2 (or same if only 1 channel)
+        self.cb_plot_channel_1_process_signals.setCurrentIndex(0)
+        self.cb_plot_channel_2_process_signals.setCurrentIndex(1 if n_channels > 1 else 0)
+
+        self.cb_plot_channel_1_process_signals.blockSignals(False)
+        self.cb_plot_channel_2_process_signals.blockSignals(False)
+
+
+    def plot_values_of_channels_process_emg(self, df, col1_name, col2_name, col1_display, col2_display) -> None:
         """
         Plot the processed data parameters
+        :param df: dataframe containing the processed data
+        :param col1_name: name of the first column to plot (X axis)
+        :param col2_name: name of the second column to plot (Y axis)
+        :param col1_display: display name for the first channel (for labels and title)
+        :param col2_display: display name for the second channel (for labels and title)
         """
         # Check if the classifiers have already been trained
         if self.data_and_classifiers is not None:
-            # Define the subplot figure
-            ax1 = self.figure_1.add_subplot(111)
-            # Define parameters and values of the categories
-            categories = df["Category"].unique()
-            # Modern color palette
-            colors = ["#3498db", "#e74c3c", "#2ecc71", "#f39c12", "#9b59b6", 
-                     "#1abc9c", "#d35400", "#34495e", "#7f8c8d", "#c0392b"]
-            category = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-            
-            # Get the number of channels from parameters
-            n_channels = self.params.n_of_channels_and_category
-            
-            # Get column names
-            col1_name = f"Chanel_{col1}"
-            col2_name = f"Chanel_{col2}"
-            
-            # Plot each category with improved styling
-            for i, j in enumerate(categories):
-                mask = df["Category"] == j
-                df_x = df[mask]
-                # Only plot if the channels are within the available range
-                if col1 <= n_channels and col2 <= n_channels:
+            try:
+                # Define the subplot figure
+                ax1 = self.figure_1.add_subplot(111)
+                # Define parameters and values of the categories
+                categories = df["Category"].unique()
+                # Modern color palette
+                colors = ["#3498db", "#e74c3c", "#2ecc71", "#f39c12", "#9b59b6", 
+                         "#1abc9c", "#d35400", "#34495e", "#7f8c8d", "#c0392b"]
+                category = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+                
+                # Plot each category with improved styling
+                for i, j in enumerate(categories):
+                    mask = df["Category"] == j
+                    df_x = df[mask]
+                    
+                    # Plot the data points
                     ax1.scatter(x=df_x[col1_name], y=df_x[col2_name], 
-                               color=colors[i], label=f"Category: {category[i]}", 
+                               color=colors[i % len(colors)], label=f"Category: {category[i]}", 
                                alpha=0.7, edgecolors='w', s=60)
-            
-            # Improve title and labels
-            ax1.set_title(f'Processed Signals: Channel {col1} vs Channel {col2}', 
-                         fontsize=14, fontweight='bold')
-            ax1.set_xlabel(f'Channel {col1}', fontsize=12)
-            ax1.set_ylabel(f'Channel {col2}', fontsize=12)
-            
-            # Add grid and legend
-            ax1.grid(True, linestyle='--', alpha=0.3)
-            ax1.legend(loc='best', frameon=True, fancybox=True, framealpha=0.7, 
-                      fontsize=10)
-            
-            # Remove top and right spines
-            ax1.spines['top'].set_visible(False)
-            ax1.spines['right'].set_visible(False)
+                
+                # Improve title and labels - use the display names instead of column names
+                ax1.set_title(f'Processed Signals: {col1_display} vs {col2_display}', 
+                             fontsize=14, fontweight='bold')
+                ax1.set_xlabel(f'{col1_display}', fontsize=12)
+                ax1.set_ylabel(f'{col2_display}', fontsize=12)
+                
+                # Add grid and legend
+                ax1.grid(True, linestyle='--', alpha=0.3)
+                ax1.legend(loc='best', frameon=True, fancybox=True, framealpha=0.7, 
+                          fontsize=10)
+                
+                # Remove top and right spines
+                ax1.spines['top'].set_visible(False)
+                ax1.spines['right'].set_visible(False)
+                
+            except Exception as e:
+                print(f"Error in plot_values_of_channels_process_emg: {e}")
+                self.show_error_message(f"Error plotting: {str(e)}")
         # Show a message box indicating that the classifiers have not been trained
         else:
             self.not_trained_model()
+
+    def show_error_message(self, message):
+        """
+        Show an error message box
+        """
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Critical)
+        msg.setText(message)
+        msg.setWindowTitle("Error")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.exec_()
 
     def not_trained_model(self) -> None:
         """
@@ -911,50 +1051,11 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec_()
 
-    def load_default_values(self) -> None:
-        """
-        Load default values from parameters.csv into the UI elements
-        """
-        try:
-            # Read parameters from CSV
-            df = pd.read_csv("Parameters/parameters.csv", index_col="Parameter")
-            
-            # Set values in UI elements
-            self.frequency.setText(str(df.loc["frequency_of_capture", "Value"]))
-            self.window_time.setText(str(df.loc["window_time", "Value"]))
-            self.n_of_channels.setCurrentText(str(df.loc["n_of_channels_and_category", "Value"]))
-            self.wav_filter.setText(str(df.loc["filter_to_use", "Value"]))
-            self.levels_of_wav_filter.setCurrentText(str(df.loc["levels_to_use", "Value"]))
-            self.layers_to_use.setCurrentText(str(len(ast.literal_eval(df.loc["layers_to_catch", "Value"]))))
-            self.type_of_matrix.setCurrentText(str(df.loc["type_matrix", "Value"]))
-            self.test_size.setText(str(df.loc["test_size", "Value"]))
-            self.random_state.setText(str(df.loc["random_state", "Value"]))
-            self.cv.setText(str(df.loc["cv", "Value"]))
-            self.file_path_label.setText(str(df.loc["file", "Value"]))
-            
-            # Set filter paths
-            self.filter_1_path.setText("Parameters/high_pass_filter.csv")
-            self.filter_2_path.setText("Parameters/bandstop_filter.csv")
-            
-        except Exception as e:
-            print(f"Error loading default values: {e}")
-
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    # Create the main window
-    MainWindow = QtWidgets.QMainWindow()
-    # Create the application instance
-    ui = EmgApplication(MainWindow)
-    # Set the central widget
-    MainWindow.setCentralWidget(ui)
-    # Set window title
-    MainWindow.setWindowTitle("EMG Signal Analysis")
-    # Set window size
-    MainWindow.resize(1200, 800)
-    # Show the window
-    MainWindow.show()
-    # Start the application event loop
+    window = EmgApplication()
+    window.show()
     sys.exit(app.exec_())
 
 

@@ -1,6 +1,6 @@
 Classifiers,Scores
-lda,0.8527980535279805
+lda,0.8479318734793188
 gnb,1.0
 lin_svm,1.0
 knn,1.0
-tree,0.9987834549878345
+tree,1.0
