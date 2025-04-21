@@ -11,6 +11,6 @@ layers_to_catch,"[1, 2]",,Using de Layers D1 and C1
 test_size,0.2,,30% of the samples will be for test and 70% for training
 "random_state""",42,,Arbitary number to generate the test values
 cv,5,,Number used for Cross Validation
-file,C:/Users/clima/OneDrive/Área de Trabalho/Cursor/arquivo_empilhado.csv,,File containing the raw data to training
+file,C:/Users/clima/OneDrive/Área de Trabalho/Cursor/DEEP_LEARNING_MYO_SIGNALS/Raw_EMG_Data/arquivo_empilhado.csv,,File containing the raw data to training
 type_matrix,rms,,
 random_state,5,,

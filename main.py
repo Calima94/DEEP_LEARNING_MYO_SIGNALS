@@ -419,8 +419,9 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
         Load default values from parameters.csv into the UI elements
         """
         try:
-            # Read parameters from CSV
-            df = pd.read_csv("Parameters/parameters.csv", index_col="Parameter")
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            param_file_path = os.path.join(base_dir, "Parameters", "parameters.csv")
+            df = pd.read_csv(param_file_path, index_col="Parameter")
             
             # Set values in UI elements
             self.frequency.setText(str(df.loc["frequency_of_capture", "Value"]))
@@ -961,7 +962,7 @@ class EmgApplication(QtWidgets.QWidget, Ui_Form):
                 # Modern color palette
                 colors = ["#3498db", "#e74c3c", "#2ecc71", "#f39c12", "#9b59b6", 
                          "#1abc9c", "#d35400", "#34495e", "#7f8c8d", "#c0392b"]
-                category = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+                category = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
                 
                 # Plot each category with improved styling
                 for i, j in enumerate(categories):
