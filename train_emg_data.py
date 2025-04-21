@@ -684,4 +684,4 @@ class Ui_Form(object):
         self.label_26.setText(_translate("Form", "Plot ROC Curve"))
         self.plot_roc_curve_btn_2.setText(_translate("Form", "Plot ROC Curve"))
         self.label_27.setText(_translate("Form", "Contact"))
-        self.label_28.setText(_translate("Form", "Caio Lima - caioeduardolima@hotmail.com"))
+        self.label_28.setText(_translate("Form", "Caio Lima - caiolima2000@hotmail.com"))
